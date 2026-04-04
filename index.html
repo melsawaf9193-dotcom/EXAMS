@@ -1,0 +1,293 @@
+
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+<meta charset="UTF-8">
+<title>نظام نتائج الدورات</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;700&display=swap" rel="stylesheet">
+
+<style>
+*{box-sizing:border-box;}
+
+body{
+margin:0;
+font-family:'Cairo',sans-serif;
+background-image:url("https://raw.githubusercontent.com/mohamedelsawaf9193/garage-report/main/mecha.png");
+background-size:cover;
+background-position:center;
+background-attachment:fixed;
+color:white;
+}
+
+.overlay{
+background:rgba(0,0,0,0.8);
+min-height:100vh;
+padding:40px;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+
+.container{
+width:100%;
+max-width:900px;
+background:rgba(20,20,20,0.75);
+backdrop-filter:blur(12px);
+border-radius:20px;
+padding:35px;
+box-shadow:0 10px 40px rgba(0,0,0,0.9);
+}
+
+.header{text-align:center;margin-bottom:30px;}
+
+.header h1{
+margin:0;
+font-weight:700;
+font-size:28px;
+}
+
+label{
+display:block;
+margin-top:18px;
+margin-bottom:6px;
+font-size:14px;
+opacity:0.9;
+}
+
+input, select, textarea{
+width:100%;
+padding:12px;
+border-radius:10px;
+border:1px solid #333;
+background:#141414;
+color:white;
+font-family:'Cairo',sans-serif;
+font-size:14px;
+}
+
+textarea{
+height:220px;
+resize:none;
+}
+
+button{
+margin-top:15px;
+width:100%;
+padding:14px;
+border:none;
+border-radius:12px;
+background:linear-gradient(45deg,#00c6ff,#0072ff);
+color:white;
+font-size:16px;
+font-weight:700;
+cursor:pointer;
+transition:0.25s;
+}
+
+button:hover{
+transform:scale(1.03);
+box-shadow:0 0 20px rgba(0,150,255,0.6);
+}
+
+.result{
+margin-top:25px;
+background:#0a0a0a;
+padding:20px;
+border-radius:12px;
+white-space:pre-wrap;
+border:1px solid #333;
+line-height:1.7;
+font-size:14px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="overlay">
+<div class="container">
+
+<div class="header">
+<h1>نتائج الدورات</h1>
+</div>
+
+<label>اسم الدورة</label>
+<select id="courseName">
+<option>خدمات الطرق</option>
+<option>العمليات</option>
+<option>التعديل و التزويد</option>
+<option>التصنيع</option>
+</select>
+
+<label>رقم الدورة</label>
+<input id="courseNumber" value="0">
+
+<label>الصق البيانات هنا</label>
+<textarea id="data"></textarea>
+
+<button onclick="generate()">إنشاء التقرير</button>
+<button id="copyBtn" onclick="copyResult()">نسخ النتيجة</button>
+
+<div class="result" id="result"></div>
+
+</div>
+</div>
+
+<script>
+
+// استخراج ID
+function extractID(line){
+let match=line.match(/\d{12,}/)
+return match ? match[0] : ""
+}
+
+// استخراج الدرجة
+function extractScore(line){
+let score20=line.match(/(\d+)\s*\/\s*20/)
+if(score20){
+return Math.round(parseInt(score20[1]) / 2)
+}
+
+let score10=line.match(/(\d+)\s*\/\s*10/)
+if(score10){
+return parseInt(score10[1])
+}
+
+return null
+}
+
+// استخراج الاسم
+function extractName(line){
+let parts=line.split("\t")
+return parts[2] ? parts[2].trim() : ""
+}
+
+// استخراج الكود
+function extractCode(line){
+let parts=line.split("\t")
+return parts[3] ? parts[3].trim() : ""
+}
+
+function generate(){
+
+let lines=document.getElementById("data").value.split("\n")
+
+let g10=[]
+let g9=[]
+let g8=[]
+let g7=[]
+
+lines.forEach(line=>{
+
+let score=extractScore(line)
+if(score===null) return
+
+let id=extractID(line)
+if(!id) return
+
+let name=extractName(line)
+let code=extractCode(line)
+
+let mention="<@"+id+">"
+
+// للعرض
+let display=mention
+if(name || code){
+display+=" | "+name+(code ? " ("+code+")" : "")
+}
+
+let obj={copy:mention, view:display}
+
+if(score>=10) g10.push(obj)
+else if(score==9) g9.push(obj)
+else if(score==8) g8.push(obj)
+else if(score==7) g7.push(obj)
+
+})
+
+let course=document.getElementById("courseName").value
+let num=document.getElementById("courseNumber").value
+
+let reportView="***﷽***\n\n"
+let reportCopy="***﷽***\n\n"
+
+reportView+="***اما بعد ..***\n\n"
+reportCopy+="***اما بعد ..***\n\n"
+
+reportView+="***رصد درجات الناجحين في دورة***\n"
+reportCopy+="***رصد درجات الناجحين في دورة***\n"
+
+reportView+="***```اسم الدورة ( "+course+" ) ("+num+")```***\n\n"
+reportCopy+="***```اسم الدورة ( "+course+" ) ("+num+")```***\n\n"
+
+function build(title, arr){
+if(arr.length>0){
+reportView+=title+"\n"+arr.map(x=>x.view).join("\n")+"\n\n"
+reportCopy+=title+"\n"+arr.map(x=>x.copy).join("\n")+"\n\n"
+}
+}
+
+build("***10 / 10***", g10)
+build("***10 / 09***", g9)
+build("***10 / 08***", g8)
+build("***10 / 07***", g7)
+
+let footer="------------------------------------------------\n\n"
+footer+="***شرح :   منشن      ***\n\n"
+footer+="*** مسؤول الدورة   :   منشن   ***\n\n"
+footer+="*** نائب مسؤول الدورة   :   منشن   ***\n\n"
+footer+="***التوقيع وعتماد :  <@1199529688989696051>   ***\n\n"
+footer+="***نسخة الى/ <@&1071933354976493650> ***\n"
+footer+="***للمتابعة والتنفيذ :  <@&1149742928953086105> ***\n"
+footer+="***للعلم و الاحاطة :  <@&1071933352497664010>   ***"
+
+reportView+=footer
+reportCopy+=footer
+
+// نخزن نسخة النسخ
+window.finalCopyText=reportCopy
+
+// نعرض النسخة الكاملة
+document.getElementById("result").textContent=reportView
+
+}
+
+// نسخ
+function copyResult(){
+
+let text=window.finalCopyText || ""
+let btn=document.getElementById("copyBtn")
+
+if(!text){
+btn.innerText="لا يوجد نتيجة"
+setTimeout(()=>{btn.innerText="نسخ النتيجة"},2000)
+return
+}
+
+navigator.clipboard.writeText(text)
+
+btn.innerText="✓ تم النسخ"
+
+setTimeout(()=>{btn.innerText="نسخ النتيجة"},2000)
+
+}
+document.addEventListener('contextmenu', function(e) {
+  e.preventDefault();
+});
+document.addEventListener('keydown', function(e) {
+  if (
+    (e.ctrlKey && e.key.toLowerCase() === 'u') ||
+    (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'i') ||
+    (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'j') ||
+    (e.ctrlKey && e.key.toLowerCase() === 's')
+  ) {
+    e.preventDefault();
+  }
+});
+</script>
+
+</body>
+</html>
