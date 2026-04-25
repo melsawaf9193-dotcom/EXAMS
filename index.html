@@ -146,17 +146,18 @@ return match ? match[0] : ""
 
 // استخراج الدرجة
 function extractScore(line){
-let score20=line.match(/(\d+)\s*\/\s*20/)
-if(score20){
-return Math.round(parseInt(score20[1]) / 2)
-}
+    let score20 = line.match(/(\d+)\s*\/\s*20/);
+    if(score20){
+        // Math.floor للتأكد من أن 19/20 تعطي 9 وليس 10
+        return Math.floor(parseInt(score20[1]) / 2);
+    }
 
-let score10=line.match(/(\d+)\s*\/\s*10/)
-if(score10){
-return parseInt(score10[1])
-}
+    let score10 = line.match(/(\d+)\s*\/\s*10/);
+    if(score10){
+        return parseInt(score10[1]);
+    }
 
-return null
+    return null;
 }
 
 // استخراج الاسم
